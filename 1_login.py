@@ -6,6 +6,9 @@ import receitas as Receita
 import despesas as Despesas
 import investimentos as Investimentos
 import dashboard as Dashboard
+from streamlit_option_menu import option_menu
+
+#st.set_page_config(layout="wide")
 
 # Configuração do banco de dados
 db_config = {
@@ -70,8 +73,6 @@ if 'logged_in' not in st.session_state:
     st.session_state['username'] = ''
 
 def main():
-    st.title("Sistema de Acesso")
-
     # Função de logout
     def logout():
         st.session_state['logged_in'] = False
@@ -95,7 +96,7 @@ def main():
                 if login_user(username, password):
                     st.session_state['logged_in'] = True
                     st.session_state['username'] = username
-                    st.success("Login bem-sucedido!")
+                    st.success("Seja Bem-Vindo")
                 else:
                     st.error("Usuário ou senha incorretos.")
 
@@ -111,17 +112,20 @@ def main():
 
     # Se estiver logado, mostre a navegação para as outras páginas
     if st.session_state['logged_in']:
-        menu = ["Dashboard","Receitas", "Despesas", "Investimentos"]
-        choice = st.selectbox("Navegar", menu)
+        with st.sidebar:
+            selected = option_menu(
+            menu_title=None,
+            options=["Receitas", "Despesas", "Investimentos", "Dasboard"])
+        #choice = st.selectbox("Navegar", menu)
 
         # As funções de página devem ser definidas em módulos separados e importadas aqui
-        if choice == "Dashboard":
+        if selected == "Dashboard":
             Dashboard.app()
-        if choice == "Receitas":
+        if selected == "Receitas":
             Receita.app()  # Esta função deve ser definida em receitas.py
-        elif choice == "Despesas":
+        elif selected == "Despesas":
             Despesas.app()  # Esta função deve ser definida em despesas.py
-        elif choice == "Investimentos":
+        elif selected == "Investimentos":
             Investimentos.app()  # Esta função deve ser definida em investimentos.py
 
 if __name__ == "__main__":
