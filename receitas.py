@@ -90,6 +90,26 @@ def get_receitas():
             st.error(f"Erro ao obter receitas: {e}")
             return pd.DataFrame()
 
+def importar_csv(id_user, file):
+    try:
+        # Lê o arquivo CSV
+        data = pd.read_csv(file)
+        conn = create_db_connection()
+        if conn:
+            cursor = conn.cursor()
+            for _, row in data.iterrows():
+                cursor.execute("""
+                    INSERT INTO receitas (ID_Users, Valor, Data, Fonte, Categoria, Descricao, Metodo_Pagamento, Frequencia, Banco_Corretora)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (id_user, row['Valor'], row['Data'], row['Fonte'], row['Categoria'], row['Descricao'], row['Metodo_Pagamento'], row['Frequencia'], row['Banco_Corretora']))
+            conn.commit()
+            st.success("Receitas importadas com sucesso!")
+    except Exception as e:
+        st.error(f"Erro ao importar receitas: {e}")
+    finally:
+        if conn:
+            conn.close()
+
 def app():
     st.title('Gestão de Receitas')
     selected = option_menu(
@@ -97,25 +117,34 @@ def app():
     options=["Adicionar", "Editar", "Excluir"],
     orientation="horizontal",
         )
-
+    
     # Verifique se o ID do usuário está disponível
     if 'user_id' in st.session_state:
         if selected == "Adicionar":
-            id_user = st.session_state['user_id']  # ID do usuário logado
-            with st.form("Receita Form", clear_on_submit=True):
-                valor = st.number_input("Valor da Receita")
-                data = st.date_input("Data da Receita")
-                fonte = st.text_input("Fonte da Receita")
-                categoria = st.text_input("Categoria da Receita")
-                descricao = st.text_area("Descrição da Receita")
-                metodo_pagamento = st.selectbox("Método de Pagamento", ['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online'])
-                frequencia = st.selectbox("Frequência", ['Única', 'Recorrente'])
-                banco_corretora = st.text_input("Banco/Corretora Vinculada")
-                submit_button = st.form_submit_button("Adicionar Receita")
-                if submit_button:
-                    insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
-            receitas_df = get_receitas()
-            st.dataframe(receitas_df)
+            metodo_lancamento = st.radio("Prefere lançar manualmente ou utilizar CSV?", ["Manual", "CSV"], horizontal=True)
+            if metodo_lancamento == "Manual":
+                id_user = st.session_state['user_id']  # ID do usuário logado
+                with st.form("Receita Form", clear_on_submit=True):
+                    valor = st.number_input("Valor da Receita")
+                    data = st.date_input("Data da Receita")
+                    fonte = st.text_input("Fonte da Receita")
+                    categoria = st.text_input("Categoria da Receita")
+                    descricao = st.text_area("Descrição da Receita")
+                    metodo_pagamento = st.selectbox("Método de Pagamento", ['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online'])
+                    frequencia = st.selectbox("Frequência", ['Única', 'Recorrente'])
+                    banco_corretora = st.text_input("Banco/Corretora Vinculada")
+                    submit_button = st.form_submit_button("Adicionar Receita")
+                    if submit_button:
+                        insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
+                receitas_df = get_receitas()
+                st.dataframe(receitas_df)
+                pass
+            elif metodo_lancamento == "CSV":
+                id_user = st.session_state['user_id']
+                uploaded_file = st.file_uploader("Faça o upload do seu arquivo CSV", type="csv")
+                if uploaded_file is not None:
+                    importar_csv(id_user, uploaded_file)
+
         elif selected == "Editar":
             receitas_df = get_receitas()
             st.dataframe(receitas_df)
