@@ -4,6 +4,7 @@ import mysql.connector
 from mysql.connector import Error
 import hashlib
 from streamlit_option_menu import option_menu
+from dateutil.relativedelta import relativedelta
 
 st.set_page_config(layout="wide")
 
@@ -113,31 +114,35 @@ def importar_csv(id_user, file):
 def app():
     st.title('Gestão de Receitas')
     selected = option_menu(
-    menu_title=None,
-    options=["Adicionar", "Editar", "Excluir"],
-    orientation="horizontal",
-        )
-    
-    # Verifique se o ID do usuário está disponível
+        menu_title=None,
+        options=["Adicionar", "Editar", "Excluir"],
+        orientation="horizontal",
+    )
+
     if 'user_id' in st.session_state:
         if selected == "Adicionar":
             metodo_lancamento = st.radio("Prefere lançar manualmente ou utilizar CSV?", ["Manual", "CSV"], horizontal=True)
             if metodo_lancamento == "Manual":
-                id_user = st.session_state['user_id']  # ID do usuário logado
-                with st.form("Receita Form", clear_on_submit=True):
-                    valor = st.number_input("Valor da Receita")
-                    data = st.date_input("Data da Receita")
-                    fonte = st.text_input("Fonte da Receita")
-                    categoria = st.text_input("Categoria da Receita")
-                    descricao = st.text_area("Descrição da Receita")
-                    metodo_pagamento = st.selectbox("Método de Pagamento", ['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online'])
-                    frequencia = st.selectbox("Frequência", ['Única', 'Recorrente'])
-                    banco_corretora = st.text_input("Banco/Corretora Vinculada")
-                    submit_button = st.form_submit_button("Adicionar Receita")
-                    if submit_button:
-                        insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
-                receitas_df = get_receitas()
-                st.dataframe(receitas_df)
+                id_user = st.session_state['user_id']
+                valor = st.number_input("Valor da Receita", min_value=0.0, format="%.2f")
+                data = st.date_input("Data da Receita")
+                fonte = st.text_input("Fonte da Receita")
+                categoria = st.text_input("Categoria da Receita")
+                descricao = st.text_area("Descrição da Receita")
+                metodo_pagamento = st.selectbox("Método de Pagamento", ['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online', 'Pix', 'Criptomoeda'])
+                frequencia = st.selectbox("Frequência", ['Única', 'Recorrente'])
+                meses_recorrentes = 0
+                if frequencia == "Recorrente":
+                    meses_recorrentes = st.number_input("Por quantos meses deseja lançar essa receita recorrente?", min_value=1, max_value=12, step=1)
+                banco_corretora = st.text_input("Banco/Corretora Vinculada")
+
+                if st.button("Adicionar Receita"):
+                    insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
+                    if frequencia == 'Recorrente' and meses_recorrentes > 0:
+                        for mes in range(1, meses_recorrentes + 1):
+                            data_recorrente = data + relativedelta(months=mes)
+                            insert_receita(id_user, valor, data_recorrente, fonte, categoria, descricao, metodo_pagamento, 'Recorrente', banco_corretora)
+                    st.success(f"Receita(s) adicionada(s) com sucesso!")
                 pass
             elif metodo_lancamento == "CSV":
                 id_user = st.session_state['user_id']
