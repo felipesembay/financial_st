@@ -111,6 +111,17 @@ def importar_csv(id_user, file):
         if conn:
             conn.close()
 
+def get_fontes_receitas():
+    # Aqui você faria a consulta ao banco de dados para obter as fontes de receitas
+    # Para o exemplo, vamos usar uma lista estática
+    return ['Salário', 'Venda de Produtos', 'Serviços', 'Rendimentos de Investimentos', 'Aluguel', 'Dividendos', 'Royalties',
+            'Doações', 'Subsídios Governamentais', 'Reembolsos de Despesas', 'Antecipação de Lucros',
+            'Ganhos de Capital', 'Pensão', 'Licenciamento', 'Divisão de Lucros', 'Resgate de Seguro']
+
+def get_categoria_receitas():
+    return ['Renda Fixa', 'Renda Variável', 'Renda de Trabalho', 'Negócios e Empreendedorismo', 'Renda Passiva',
+            'Prêmios', 'Reembolsos', 'Dividendos', 'Crowdfunding']
+
 def app():
     st.title('Gestão de Receitas')
     selected = option_menu(
@@ -126,10 +137,28 @@ def app():
                 id_user = st.session_state['user_id']
                 valor = st.number_input("Valor da Receita", min_value=0.0, format="%.2f")
                 data = st.date_input("Data da Receita")
-                fonte = st.text_input("Fonte da Receita")
-                categoria = st.text_input("Categoria da Receita")
+                
+                # Obter fontes de receitas e adicionar a opção para nova fonte
+                fontes_receitas = get_fontes_receitas()
+                fonte_opcao = st.selectbox("Fonte da Receita", fontes_receitas + ['Adicionar nova...'])
+                if fonte_opcao == 'Adicionar nova...':
+                    nova_fonte = st.text_input("Digite a nova fonte de receita")
+                    if nova_fonte:  # Se o usuário digitou uma nova fonte, usamos essa
+                        fonte = nova_fonte
+                else:
+                    fonte = fonte_opcao  # Caso contrário, usamos a opção selecionada
+
+                categoria_receitas = get_categoria_receitas()
+                categoria_opcao = st.selectbox("Categoria da Receita", categoria_receitas + ['Adicionar nova categoria de Receita'])
+                if categoria_opcao == 'Adicionar nova categoria de Receita':
+                    nova_categoria = st.text_input("Digite a nova categoria de receita")
+                    if nova_categoria:
+                        categoria = nova_categoria
+                else:
+                    categoria = categoria_opcao
+
                 descricao = st.text_area("Descrição da Receita")
-                metodo_pagamento = st.selectbox("Método de Pagamento", ['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online', 'Pix', 'Criptomoeda'])
+                metodo_pagamento = st.selectbox("Método de Recebimento", ['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online', 'Pix', 'Criptomoeda', 'Cartão de Crédito', 'Cartão de Débito'])
                 frequencia = st.selectbox("Frequência", ['Única', 'Recorrente'])
                 meses_recorrentes = 0
                 if frequencia == "Recorrente":
@@ -137,6 +166,7 @@ def app():
                 banco_corretora = st.text_input("Banco/Corretora Vinculada")
 
                 if st.button("Adicionar Receita"):
+                    # Aqui você adicionaria a lógica para salvar a nova fonte no banco de dados, se necessário
                     insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
                     if frequencia == 'Recorrente' and meses_recorrentes > 0:
                         for mes in range(1, meses_recorrentes + 1):
