@@ -201,18 +201,40 @@ def app():
             receita_to_edit = receitas_df[receitas_df['ID_Receita'] == receita_id_to_edit].iloc[0] if not receitas_df.empty else None
 
             if receita_to_edit is not None:
-                with st.form("Edit Form", clear_on_submit=False):
-                    valor = st.number_input("Valor da Receita", value=float(receita_to_edit['Valor']))
-                    data = st.date_input("Data da Receita", value=receita_to_edit['Data'])
-                    fonte = st.text_input("Fonte da Receita", value=receita_to_edit['Fonte'])
-                    categoria = st.text_input("Categoria da Receita", value=receita_to_edit['Categoria'])
-                    descricao = st.text_area("Descrição da Receita", value=receita_to_edit['Descricao'])
-                    metodo_pagamento = st.selectbox("Método de Pagamento", ['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online'], index=['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online'].index(receita_to_edit['Metodo_Pagamento']))
-                    frequencia = st.selectbox("Frequência", ['Única', 'Recorrente'], index=['Única', 'Recorrente'].index(receita_to_edit['Frequencia']))
-                    banco_corretora = st.text_input("Banco/Corretora Vinculada", value=receita_to_edit['Banco_Corretora'])
-                    submit_edicao = st.form_submit_button("Salvar Alterações")
-                    if submit_edicao:
-                        update_receita(receita_id_to_edit, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
+                valor = st.number_input("Valor da Receita", value=float(receita_to_edit['Valor']))
+                data = st.date_input("Data da Receita", value=receita_to_edit['Data'])
+
+                fontes_receitas = get_fontes_receitas()
+                fonte_opcao = st.selectbox("Fonte da Receita", fontes_receitas + ['Adicionar nova...'], index=fontes_receitas.index(receita_to_edit['Fonte']) if receita_to_edit['Fonte'] in fontes_receitas else len(fontes_receitas))
+                if fonte_opcao == 'Adicionar nova...':
+                    nova_fonte = st.text_input("Digite a nova fonte de receita")
+                    fonte = nova_fonte if nova_fonte else receita_to_edit['Fonte']
+                else:
+                    fonte = fonte_opcao
+
+                categoria_receitas = get_categoria_receitas()
+                categoria_opcao = st.selectbox("Categoria da Receita", categoria_receitas + ['Adicionar nova categoria de Receita'], index=categoria_receitas.index(receita_to_edit['Categoria']) if receita_to_edit['Categoria'] in categoria_receitas else len(categoria_receitas))
+                if categoria_opcao == 'Adicionar nova categoria de Receita':
+                    nova_categoria = st.text_input("Digite a nova categoria de receita")
+                    categoria = nova_categoria if nova_categoria else receita_to_edit['Categoria']
+                else:
+                    categoria = categoria_opcao
+
+                descricao = st.text_area("Descrição da Receita", value=receita_to_edit['Descricao'])
+                metodo_pagamento = st.selectbox("Método de Pagamento", ['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online', 'Pix', 'Criptomoeda', 'Cartão de Crédito', 'Cartão de Débito'], index=['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online', 'Pix', 'Criptomoeda', 'Cartão de Crédito', 'Cartão de Débito'].index(receita_to_edit['Metodo_Pagamento']))
+                frequencia = st.selectbox("Frequência", ['Única', 'Recorrente'], index=['Única', 'Recorrente'].index(receita_to_edit['Frequencia']))
+
+                banco_corretoras_lancamento = get_bancos()
+                banco_opcao = st.selectbox("Banco/Corretora Vinculada", banco_corretoras_lancamento + ['Adicionar novo banco ou corretora'], index=banco_corretoras_lancamento.index(receita_to_edit['Banco_Corretora']) if receita_to_edit['Banco_Corretora'] in banco_corretoras_lancamento else len(banco_corretoras_lancamento))
+                if banco_opcao == 'Adicionar novo banco ou corretora':
+                    novo_banco_corretora = st.text_input("Digite o Banco ou Corretora")
+                    banco_corretora = novo_banco_corretora if novo_banco_corretora else receita_to_edit['Banco_Corretora']
+                else:
+                    banco_corretora = banco_opcao
+
+        if st.button("Salvar Alterações"):
+            update_receita(receita_id_to_edit, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
+            st.success(f"Receita atualizada com sucesso!")
 
         elif selected == "Excluir":
             st.subheader("Excluir Receita")
