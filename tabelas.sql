@@ -26,6 +26,20 @@ CREATE TABLE receitas (
     FOREIGN KEY (ID_Users) REFERENCES users(ID)
 );
 
+CREATE TABLE despesas (
+    ID_Despesa INT AUTO_INCREMENT PRIMARY KEY,
+    ID_Users INT NOT NULL,
+    Valor DECIMAL(10,2) NOT NULL,
+    Data DATE NOT NULL,
+    Fornecedor VARCHAR(255) NOT NULL,
+    Categoria VARCHAR(100),
+    Descricao TEXT,
+    Metodo_Pagamento VARCHAR(100),
+    Bandeira_cartão VARCHAR(50),
+    Frequencia VARCHAR(100),
+    Banco_Corretora VARCHAR(255),
+    FOREIGN KEY (ID_Users) REFERENCES users(ID)
+);
 
 CREATE TABLE despesas (
     ID INT AUTO_INCREMENT PRIMARY KEY,

@@ -232,9 +232,9 @@ def app():
                 else:
                     banco_corretora = banco_opcao
 
-        if st.button("Salvar Alterações"):
-            update_receita(receita_id_to_edit, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
-            st.success(f"Receita atualizada com sucesso!")
+            if st.button("Salvar Alterações"):
+                update_receita(receita_id_to_edit, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
+                st.success(f"Receita atualizada com sucesso!")
 
         elif selected == "Excluir":
             st.subheader("Excluir Receita")
