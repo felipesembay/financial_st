@@ -121,6 +121,11 @@ def get_fontes_receitas():
 def get_categoria_receitas():
     return ['Renda Fixa', 'Renda Variável', 'Renda de Trabalho', 'Negócios e Empreendedorismo', 'Renda Passiva',
             'Prêmios', 'Reembolsos', 'Dividendos', 'Crowdfunding']
+def get_bancos():
+    return ['Banco do Brasil', 'Bradesco', 'Banco Inter','BTG Pactual','Caixa Econômica Federal', 'C6 Bank', 'Easy Invest',
+            'Itaú Unibanco', 'ModalMais','Neon','Nubank','Original', 'Santander Brasil', 
+            'Clear','Genial Investimentos','XP Investimentos', 'Rico Investimentos'
+            ]
 
 def app():
     st.title('Gestão de Receitas')
@@ -163,7 +168,15 @@ def app():
                 meses_recorrentes = 0
                 if frequencia == "Recorrente":
                     meses_recorrentes = st.number_input("Por quantos meses deseja lançar essa receita recorrente?", min_value=1, max_value=12, step=1)
-                banco_corretora = st.text_input("Banco/Corretora Vinculada")
+                
+                banco_corretoras_lancamento = get_bancos()
+                banco_opcao = st.selectbox("Categoria da Receita", banco_corretoras_lancamento + ['Adicionar novo banco ou corretora'])
+                if banco_opcao == 'Adicionar novo banco ou corretora':
+                    novo_banco_corretora = st.text_input("Digite o Banco ou Corretora")
+                    if novo_banco_corretora:
+                        banco_corretora = novo_banco_corretora
+                else:
+                    banco_corretora = banco_opcao
 
                 if st.button("Adicionar Receita"):
                     # Aqui você adicionaria a lógica para salvar a nova fonte no banco de dados, se necessário
