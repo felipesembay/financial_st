@@ -6,7 +6,7 @@ import hashlib
 from streamlit_option_menu import option_menu
 from dateutil.relativedelta import relativedelta
 
-st.set_page_config(layout="wide", initial_sidebar_state="expanded")
+#st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 
 db_config = {
     'host': '172.17.0.2',
@@ -101,27 +101,24 @@ def importar_csv(id_user, file):
             cursor = conn.cursor()
             for _, row in data.iterrows():
                 cursor.execute("""
-                    INSERT INTO despesas (ID_Users, Valor, Data, Fonte, Categoria, Descricao, Metodo_Pagamento, Frequencia, Banco_Corretora)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (id_user, row['Valor'], row['Data'], row['Fonte'], row['Categoria'], row['Descricao'], row['Metodo_Pagamento'], row['Frequencia'], row['Banco_Corretora']))
+                    INSERT INTO despesas (ID_Users, Valor, Data, Fornecedor, Categoria, Descricao, Metodo_Pagamento, Bandeira_cartão ,Frequencia, Banco_Corretora)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (id_user, row['Valor'], row['Data'], row['Fonte'], row['Categoria'], row['Descricao'], row['Metodo_Pagamento'], row['Bandeira_cartão'],row['Frequencia'], row['Banco_Corretora']))
             conn.commit()
-            st.success("Receitas importadas com sucesso!")
+            st.success("Despesas importadas com sucesso!")
     except Exception as e:
-        st.error(f"Erro ao importar receitas: {e}")
+        st.error(f"Erro ao importar despesas: {e}")
     finally:
         if conn:
             conn.close()
 
-def get_fontes_despesas():
-    # Aqui você faria a consulta ao banco de dados para obter as fontes de receitas
-    # Para o exemplo, vamos usar uma lista estática
-    return ['Salário', 'Venda de Produtos', 'Serviços', 'Rendimentos de Investimentos', 'Aluguel', 'Dividendos', 'Royalties',
-            'Doações', 'Subsídios Governamentais', 'Reembolsos de Despesas', 'Antecipação de Lucros',
-            'Ganhos de Capital', 'Pensão', 'Licenciamento', 'Divisão de Lucros', 'Resgate de Seguro']
+def get_fornecedor_despesas():
+    return ['Sanepar', 'Sabesp', 'Energisa', 'Copel', 'Renner', 'Marisa', 'Carrefour']
 
 def get_categoria_despesas():
-    return ['Renda Fixa', 'Renda Variável', 'Renda de Trabalho', 'Negócios e Empreendedorismo', 'Renda Passiva',
-            'Prêmios', 'Reembolsos', 'Dividendos', 'Crowdfunding']
+    return ['Alimentação', 'Aluguel', 'Cuidados Pessoais', 'Educação', 'Empréstimo', 'Financiamento',
+'Impostos', 'Investimento', 'Lazer e Entretenimento', 'Saúde', 'Seguro','Transporte', 'Utilidades','Vestuário']
+
 def get_bancos():
     return ['Banco do Brasil', 'Bradesco', 'Banco Inter','BTG Pactual','Caixa Econômica Federal', 'C6 Bank', 'Easy Invest',
             'Itaú Unibanco', 'ModalMais','Neon','Nubank','Original', 'Santander Brasil', 
@@ -141,37 +138,40 @@ def app():
             metodo_lancamento = st.radio("Prefere lançar manualmente ou utilizar CSV?", ["Manual", "CSV"], horizontal=True)
             if metodo_lancamento == "Manual":
                 id_user = st.session_state['user_id']
-                valor = st.number_input("Valor da Receita", min_value=0.0, format="%.2f")
-                data = st.date_input("Data da Receita")
+                valor = st.number_input("Valor da Despesa", min_value=0.0, format="%.2f")
+                data = st.date_input("Data da Despesa")
                 
                 # Obter fontes de receitas e adicionar a opção para nova fonte
-                fontes_receitas = get_fontes_despesas()
-                fonte_opcao = st.selectbox("Fonte da Receita", fontes_receitas + ['Adicionar nova...'])
-                if fonte_opcao == 'Adicionar nova...':
-                    nova_fonte = st.text_input("Digite a nova fonte de receita")
-                    if nova_fonte:  # Se o usuário digitou uma nova fonte, usamos essa
-                        fonte = nova_fonte
+                fornecedor_despesas = get_fornecedor_despesas()
+                fornecedor_opcao = st.selectbox("Fornecedor", fornecedor_despesas + ['Adicionar nova...'])
+                if fornecedor_opcao == 'Adicionar nova...':
+                    novo_fornecedor = st.text_input("Digite a novo fornecedor")
+                    if novo_fornecedor:  # Se o usuário digitou uma nova fonte, usamos essa
+                        fornecedor_despesas = novo_fornecedor
                 else:
-                    fonte = fonte_opcao  # Caso contrário, usamos a opção selecionada
+                    fornecedor_despesas = fornecedor_opcao # Caso contrário, usamos a opção selecionada
 
                 categoria_despesas = get_categoria_despesas()
-                categoria_opcao = st.selectbox("Categoria da Receita", categoria_despesas + ['Adicionar nova categoria de Receita'])
-                if categoria_opcao == 'Adicionar nova categoria de Receita':
-                    nova_categoria = st.text_input("Digite a nova categoria de receita")
+                categoria_opcao = st.selectbox("Categoria da Despesas", categoria_despesas + ['Adicionar nova categoria de Despesa'])
+                if categoria_opcao == 'Adicionar nova categoria de Despesa':
+                    nova_categoria = st.text_input("Digite a nova categoria de despesas")
                     if nova_categoria:
                         categoria = nova_categoria
                 else:
                     categoria = categoria_opcao
 
-                descricao = st.text_area("Descrição da Receita")
+                descricao = st.text_area("Descrição da Despesa")
                 metodo_pagamento = st.selectbox("Método de Recebimento", ['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online', 'Pix', 'Criptomoeda', 'Cartão de Crédito', 'Cartão de Débito'])
+                bandeira_cartao = None
+                if metodo_pagamento in ['Cartão de Crédito', 'Cartão de Débito']:
+                    bandeira_cartao = st.selectbox('Bandeira do Cartão', ['Visa', 'MasterCard'])
                 frequencia = st.selectbox("Frequência", ['Única', 'Recorrente'])
                 meses_recorrentes = 0
                 if frequencia == "Recorrente":
                     meses_recorrentes = st.number_input("Por quantos meses deseja lançar essa receita recorrente?", min_value=1, max_value=12, step=1)
                 
                 banco_corretoras_lancamento = get_bancos()
-                banco_opcao = st.selectbox("Categoria da Receita", banco_corretoras_lancamento + ['Adicionar novo banco ou corretora'])
+                banco_opcao = st.selectbox("Banco", banco_corretoras_lancamento + ['Adicionar novo banco ou corretora'])
                 if banco_opcao == 'Adicionar novo banco ou corretora':
                     novo_banco_corretora = st.text_input("Digite o Banco ou Corretora")
                     if novo_banco_corretora:
@@ -179,14 +179,14 @@ def app():
                 else:
                     banco_corretora = banco_opcao
 
-                if st.button("Adicionar Receita"):
+                if st.button("Adicionar Despesa"):
                     # Aqui você adicionaria a lógica para salvar a nova fonte no banco de dados, se necessário
-                    insert_despesa(id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
+                    insert_despesa(id_user, valor, data, fornecedor_despesas, categoria, descricao, metodo_pagamento, bandeira_cartao,frequencia, banco_corretora)
                     if frequencia == 'Recorrente' and meses_recorrentes > 0:
                         for mes in range(1, meses_recorrentes + 1):
                             data_recorrente = data + relativedelta(months=mes)
-                            insert_despesa(id_user, valor, data_recorrente, fonte, categoria, descricao, metodo_pagamento, 'Recorrente', banco_corretora)
-                    st.success(f"Receita(s) adicionada(s) com sucesso!")
+                            insert_despesa(id_user, valor, data_recorrente, fornecedor_despesas, categoria, descricao, metodo_pagamento, bandeira_cartao,'Recorrente', banco_corretora)
+                    st.success(f"Despesas(s) adicionada(s) com sucesso!")
                 pass
             elif metodo_lancamento == "CSV":
                 id_user = st.session_state['user_id']
@@ -198,20 +198,21 @@ def app():
             despesas_df = get_despesas()
             st.dataframe(despesas_df)
             st.subheader("Editar Receita")
-            despesas_id_to_edit = st.selectbox("Selecione a receita para editar", despesas_df['ID_Receita'].tolist())
-            despesas_to_edit = despesas_df[despesas_df['ID_Receita'] == despesas_id_to_edit].iloc[0] if not despesas_df.empty else None
+            despesas_id_to_edit = st.selectbox("Selecione a despesa para editar", despesas_df['ID_Despesa'].tolist())
+            despesas_to_edit = despesas_df[despesas_df['ID_Despesa'] == despesas_id_to_edit].iloc[0] if not despesas_df.empty else None
 
             if despesas_to_edit is not None:
-                valor = st.number_input("Valor da Receita", value=float(despesas_to_edit['Valor']))
-                data = st.date_input("Data da Receita", value=despesas_to_edit['Data'])
+                valor = st.number_input("Valor da Despesa", value=float(despesas_to_edit['Valor']))
+                data = st.date_input("Data da Despesa", value=despesas_to_edit['Data'])
 
-                fontes_despesas = get_fontes_despesas()
-                fonte_opcao = st.selectbox("Fonte da Receita", fontes_despesas + ['Adicionar nova...'], index=fontes_despesas.index(despesas_to_edit['Fonte']) if despesas_to_edit['Fonte'] in fontes_receitas else len(fontes_receitas))
-                if fonte_opcao == 'Adicionar nova...':
-                    nova_fonte = st.text_input("Digite a nova fonte de receita")
-                    fonte = nova_fonte if nova_fonte else despesas_to_edit['Fonte']
+                fornecedor_despesas = get_fornecedor_despesas()
+                fornecedor_opcao = st.selectbox("Fornecedor", fornecedor_despesas + ['Adicionar nova...'])
+                if fornecedor_opcao == 'Adicionar nova...':
+                    novo_fornecedor = st.text_input("Digite a novo fornecedor")
+                    if novo_fornecedor:  # Se o usuário digitou uma nova fonte, usamos essa
+                        fornecedor_despesas = novo_fornecedor
                 else:
-                    fonte = fonte_opcao
+                    fornecedor_despesas = fornecedor_opcao # Caso contrário, usamos a opção selecionada
 
                 categoria_despesas = get_categoria_despesas()
                 categoria_opcao = st.selectbox("Categoria da Receita", categoria_despesas + ['Adicionar nova categoria de Receita'], index=categoria_despesas.index(despesas_to_edit['Categoria']) if despesas_to_edit['Categoria'] in categoria_despesas else len(categoria_despesas))
@@ -221,8 +222,11 @@ def app():
                 else:
                     categoria = categoria_opcao
 
-                descricao = st.text_area("Descrição da Receita", value=despesas_to_edit['Descricao'])
+                descricao = st.text_area("Descrição da Despesa", value=despesas_to_edit['Descricao'])
                 metodo_pagamento = st.selectbox("Método de Pagamento", ['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online', 'Pix', 'Criptomoeda', 'Cartão de Crédito', 'Cartão de Débito'], index=['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online', 'Pix', 'Criptomoeda', 'Cartão de Crédito', 'Cartão de Débito'].index(despesas_to_edit['Metodo_Pagamento']))
+                bandeira_cartao = despesas_to_edit['Bandeira_cartao'] if 'Bandeira_cartao' in despesas_to_edit else None
+                if metodo_pagamento in ['Cartão de Crédito', 'Cartão de Débito']:
+                    bandeira_cartao = st.selectbox('Bandeira do Cartão', ['Visa', 'MasterCard'], index=['Visa', 'MasterCard'].index(bandeira_cartao) if bandeira_cartao in ['Visa', 'MasterCard'] else 0)
                 frequencia = st.selectbox("Frequência", ['Única', 'Recorrente'], index=['Única', 'Recorrente'].index(despesas_to_edit['Frequencia']))
 
                 banco_corretoras_lancamento = get_bancos()
@@ -234,16 +238,16 @@ def app():
                     banco_corretora = banco_opcao
 
             if st.button("Salvar Alterações"):
-                update_despesa(despesas_id_to_edit, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
+                update_despesa(despesas_id_to_edit, valor, data, fornecedor_despesas, categoria, descricao, metodo_pagamento, bandeira_cartao,frequencia, banco_corretora)
                 st.success(f"Receita atualizada com sucesso!")
 
         elif selected == "Excluir":
-            st.subheader("Excluir Receita")
+            st.subheader("Excluir Lançamento")
             # Certifique-se de que receitas_df está disponível
             despesas_df = get_despesas()
             st.dataframe(despesas_df)
-            despesa_id_to_delete = st.selectbox("Selecione a ID da receita para excluir:", despesas_df['ID_Receita'].tolist())
-            if st.button("Excluir Receita"):
+            despesa_id_to_delete = st.selectbox("Selecione a ID da despesa para excluir:", despesas_df['ID_Despesa'].tolist())
+            if st.button("Excluir Lançamento"):
                 delete_despesa(despesa_id_to_delete)
 
     else:

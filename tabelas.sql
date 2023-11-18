@@ -35,7 +35,7 @@ CREATE TABLE despesas (
     Categoria VARCHAR(100),
     Descricao TEXT,
     Metodo_Pagamento VARCHAR(100),
-    Bandeira_cartão VARCHAR(50),
+    Bandeira_cartao VARCHAR(50),
     Frequencia VARCHAR(100),
     Banco_Corretora VARCHAR(255),
     FOREIGN KEY (ID_Users) REFERENCES users(ID)
