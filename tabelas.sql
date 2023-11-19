@@ -53,10 +53,17 @@ CREATE TABLE despesas (
 
 CREATE TABLE investimentos (
     ID INT AUTO_INCREMENT PRIMARY KEY,
-    ID_Users INT,
-    Investimentos DECIMAL(10,2),
-    Fonte VARCHAR(255),
-    Centro_Investimentos VARCHAR(255),
-    Data_Cadastramento_Investimentos DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ID_Users) REFERENCES users(ID)
+    ID_Users INT NOT NULL,  -- Coluna para vincular ao ID do usuário
+    simbolo_acao VARCHAR(20) NOT NULL,
+    data_compra DATE NOT NULL,
+    quantidade DECIMAL(10, 2) NOT NULL,
+    preco_compra DECIMAL(10, 2) NOT NULL,
+    custo_aquisicao DECIMAL(10, 2) NOT NULL,
+    corretora VARCHAR(50) NOT NULL,
+    carteira VARCHAR(50) NOT NULL,
+    objetivo VARCHAR(100),
+    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (ID_Users) REFERENCES users(ID)  -- Chave estrangeira para vincular ao usuário
 );
+
