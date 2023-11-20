@@ -86,7 +86,7 @@ def app():
             with col2:
                 purchase_date = st.date_input("Data da Compra:")
             with col3:
-                quantity = st.number_input("Quantidade de Ações:", min_value=0)
+                quantity = st.number_input("Quantidade de Ações:", min_value=1)
             with col4:
                 purchase_price = st.number_input("Preço da Compra por Ação:", min_value=0.0, format="%.2f")
 
@@ -111,7 +111,6 @@ def app():
                         st.success(f"O preço de compra de {purchase_price} está dentro do intervalo entre {min_price} e {max_price}.")
                         if st.button("Adicionar Investimento"):
                             insert_investment(id_user, symbol, purchase_date, quantity, purchase_price, acquisition_cost, broker, portfolio, objective)
-                            st.success("Investimento adicionado com sucesso!")
                     else:
                         st.error(f"O preço de compra de {purchase_price} está fora do intervalo entre {min_price} e {max_price}.")
                 else:
