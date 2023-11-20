@@ -8,7 +8,7 @@ import investimentos as Investimentos
 import dashboard as Dashboard
 from streamlit_option_menu import option_menu
 
-st.set_page_config(layout="wide", initial_sidebar_state="expanded")
+#st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 
 # Configuração do banco de dados
 db_config = {

@@ -100,8 +100,24 @@ def app():
 
             objective = st.text_area("Objetivo do Investimento:")
 
-            if st.button("Adicionar Investimento"):
-                insert_investment(id_user, symbol, purchase_date, quantity, purchase_price, acquisition_cost, broker, portfolio, objective)
+            # Verifique se os dados da ação estão disponíveis
+            try:
+                stock_data = yf.download(symbol, start=purchase_date)
+                if not stock_data.empty and len(stock_data) > 0:
+                    min_price = stock_data['Low'][0]
+                    max_price = stock_data['High'][0]
+
+                    if min_price <= purchase_price <= max_price:
+                        st.success(f"O preço de compra de {purchase_price} está dentro do intervalo entre {min_price} e {max_price}.")
+                        if st.button("Adicionar Investimento"):
+                            insert_investment(id_user, symbol, purchase_date, quantity, purchase_price, acquisition_cost, broker, portfolio, objective)
+                            st.success("Investimento adicionado com sucesso!")
+                    else:
+                        st.error(f"O preço de compra de {purchase_price} está fora do intervalo entre {min_price} e {max_price}.")
+                else:
+                    st.error(f"Dados da ação não disponíveis para a data de compra especificada.")
+            except Exception as e:
+                st.error(f"Erro ao obter dados da ação: {e}")
 
 if __name__ == "__main__":
     app()
