@@ -201,6 +201,7 @@ if 'logged_in' not in st.session_state:
 def main():
     st.title("Sistema de Acesso")
 
+
     # Função de logout
     def logout():
         st.session_state['logged_in'] = False

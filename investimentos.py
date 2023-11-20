@@ -2,9 +2,10 @@ import streamlit as st
 import mysql.connector
 from mysql.connector import Error
 import yfinance as yf
+from streamlit_option_menu import option_menu
+import pandas as pd
 
-#st.set_page_config(layout="wide")
-
+# Configuração do banco de dados
 db_config = {
     'host': '172.17.0.2',
     'port': '3306',
@@ -47,17 +48,31 @@ def get_investments():
             result = cursor.fetchall()
             cursor.close()
             conn.close()
-            return result
+            return pd.DataFrame(result, columns=["ID", "ID_Users", "simbolo_acao", "data_compra", "quantidade", "preco_compra", "custo_aquisicao", "corretora", "carteira", "objetivo", "data_criacao", "data_atualizacao"])
         except Error as e:
             st.error(f"Erro ao obter os investimentos: {e}")
-            return []
+            return pd.DataFrame()  # Retornar um DataFrame vazio em caso de erro
 
 def app():
     st.title('Gestão de Investimentos')
 
-    selected = st.selectbox("Selecione uma opção:", ["Adicionar Investimento", "Ver Investimentos"])
+    selected = option_menu(
+        menu_title=None,
+        options=["Carteira de Ações", "Consultar título", "Simulador e BackTesting"],
+        orientation="horizontal",
+    )
 
-    if selected == "Adicionar Investimento":
+    selected_option = st.radio("Selecione uma opção:", ["Exibir Lançamentos", "Adicionar Investimento"], key='radio_option', horizontal=True)
+
+    if selected_option == "Exibir Lançamentos":
+        investments = get_investments()
+        if investments.empty:
+            st.warning("Nenhum investimento encontrado na carteira.")
+        else:
+            st.subheader("Carteira de Ações:")
+            st.dataframe(investments)
+    
+    elif selected_option == "Adicionar Investimento":
         if 'user_id' in st.session_state:
             id_user = st.session_state['user_id']
             symbol = st.text_input("Símbolo da Ação (exemplo: VALE3.SA):")
@@ -74,14 +89,6 @@ def app():
 
         else:
             st.error("Você precisa estar logado para adicionar investimentos.")
-
-    elif selected == "Ver Investimentos":
-        investments = get_investments()
-        if not investments:
-            st.warning("Nenhum investimento encontrado.")
-        else:
-            st.subheader("Investimentos:")
-            st.write(investments)
 
 if __name__ == "__main__":
     app()
