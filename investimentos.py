@@ -71,24 +71,37 @@ def app():
         else:
             st.subheader("Carteira de Ações:")
             st.dataframe(investments)
-    
+
     elif selected_option == "Adicionar Investimento":
         if 'user_id' in st.session_state:
             id_user = st.session_state['user_id']
-            symbol = st.text_input("Símbolo da Ação (exemplo: VALE3.SA):")
-            purchase_date = st.date_input("Data da Compra:")
-            quantity = st.number_input("Quantidade de Ações:", min_value=0)
-            purchase_price = st.number_input("Preço da Compra por Ação:", min_value=0.0, format="%.2f")
-            acquisition_cost = quantity * purchase_price
-            broker = st.text_input("Corretora:")
-            portfolio = st.text_input("Carteira:")
+
+            # Divide a tela em 4 colunas e 2 linhas
+            col1, col2, col3, col4 = st.columns(4)
+            col5, col6, col7 = st.columns(3)
+
+            # Coluna 1
+            with col1:
+                symbol = st.text_input("Símbolo da Ação (exemplo: VALE3.SA):")
+            with col2:
+                purchase_date = st.date_input("Data da Compra:")
+            with col3:
+                quantity = st.number_input("Quantidade de Ações:", min_value=0)
+            with col4:
+                purchase_price = st.number_input("Preço da Compra por Ação:", min_value=0.0, format="%.2f")
+
+            # Coluna 2
+            with col5:
+                broker = st.text_input("Corretora:")
+            with col6:
+                portfolio = st.text_input("Carteira:")
+            with col7:
+                acquisition_cost = quantity * purchase_price
+
             objective = st.text_area("Objetivo do Investimento:")
 
             if st.button("Adicionar Investimento"):
                 insert_investment(id_user, symbol, purchase_date, quantity, purchase_price, acquisition_cost, broker, portfolio, objective)
-
-        else:
-            st.error("Você precisa estar logado para adicionar investimentos.")
 
 if __name__ == "__main__":
     app()

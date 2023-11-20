@@ -6,8 +6,6 @@ import hashlib
 from streamlit_option_menu import option_menu
 from dateutil.relativedelta import relativedelta
 
-#st.set_page_config(layout="wide", initial_sidebar_state="expanded")
-
 db_config = {
     'host': '172.17.0.2',
     'port': '3306',
@@ -25,16 +23,16 @@ def create_db_connection():
         return None
 
 # Função para inserir uma nova despesa
-def insert_despesa(id_user, valor, data, fornecedor, categoria, descricao, metodo_pagamento, bandeira_cartao, frequencia, banco_corretora):
+def insert_despesa(id_user, valor, data, fornecedor, categoria, descricao, metodo_pagamento, bandeira_cartao, frequencia, banco_corretora, status):
     conn = create_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
             query = """
-            INSERT INTO despesas (ID_Users, Valor, Data, Fornecedor, Categoria, Descricao, Metodo_Pagamento, Bandeira_cartao, Frequencia, Banco_Corretora)
+            INSERT INTO despesas (ID_Users, Valor, Data, Fornecedor, Categoria, Descricao, Metodo_Pagamento, Bandeira_cartao, Frequencia, Banco_Corretora, Status)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(query, (id_user, valor, data, fornecedor, categoria, descricao, metodo_pagamento, bandeira_cartao, frequencia, banco_corretora))
+            cursor.execute(query, (id_user, valor, data, fornecedor, categoria, descricao, metodo_pagamento, bandeira_cartao, frequencia, banco_corretora, status))
             conn.commit()
             cursor.close()
             conn.close()
@@ -43,17 +41,17 @@ def insert_despesa(id_user, valor, data, fornecedor, categoria, descricao, metod
             st.error(f"Erro ao inserir a despesa: {e}")
 
 # Função para atualizar uma despesa existente
-def update_despesa(id_despesa, valor, data, fornecedor, categoria, descricao, metodo_pagamento, bandeira_cartao, frequencia, banco_corretora):
+def update_despesa(id_despesa, valor, data, fornecedor, categoria, descricao, metodo_pagamento, bandeira_cartao, frequencia, banco_corretora, status):
     conn = create_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
             query = """
             UPDATE despesas
-            SET Valor = %s, Data = %s, Fornecedor = %s, Categoria = %s, Descricao = %s, Metodo_Pagamento = %s, Bandeira_cartao = %s, Frequencia = %s, Banco_Corretora = %s
+            SET Valor = %s, Data = %s, Fornecedor = %s, Categoria = %s, Descricao = %s, Metodo_Pagamento = %s, Bandeira_cartao = %s, Frequencia = %s, Banco_Corretora = %s, Status = %s
             WHERE ID_Despesa = %s
             """
-            cursor.execute(query, (valor, data, fornecedor, categoria, descricao, metodo_pagamento, bandeira_cartao, frequencia, banco_corretora, id_despesa))
+            cursor.execute(query, (valor, data, fornecedor, categoria, descricao, metodo_pagamento, bandeira_cartao, frequencia, banco_corretora, status,id_despesa))
             conn.commit()
             st.success("Despesa atualizada com sucesso!")
         except Error as e:
@@ -87,7 +85,7 @@ def get_despesas():
             result = cursor.fetchall()
             cursor.close()
             conn.close()
-            return pd.DataFrame(result, columns=["ID_Despesa", "ID_Users", "Valor", "Data", "Fornecedor", "Categoria", "Descricao", "Metodo_Pagamento", "Bandeira_cartao", "Frequencia", "Banco_Corretora"])
+            return pd.DataFrame(result, columns=["ID_Despesa", "ID_Users", "Valor", "Data", "Fornecedor", "Categoria", "Descricao", "Metodo_Pagamento", "Bandeira_cartao", "Frequencia", "Banco_Corretora", "Status"])
         except Error as e:
             st.error(f"Erro ao obter despesas: {e}")
             return pd.DataFrame()
@@ -101,9 +99,9 @@ def importar_csv(id_user, file):
             cursor = conn.cursor()
             for _, row in data.iterrows():
                 cursor.execute("""
-                    INSERT INTO despesas (ID_Users, Valor, Data, Fornecedor, Categoria, Descricao, Metodo_Pagamento, Bandeira_cartão ,Frequencia, Banco_Corretora)
+                    INSERT INTO despesas (ID_Users, Valor, Data, Fornecedor, Categoria, Descricao, Metodo_Pagamento, Bandeira_cartão ,Frequencia, Banco_Corretora, Status)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (id_user, row['Valor'], row['Data'], row['Fonte'], row['Categoria'], row['Descricao'], row['Metodo_Pagamento'], row['Bandeira_cartão'],row['Frequencia'], row['Banco_Corretora']))
+                """, (id_user, row['Valor'], row['Data'], row['Fonte'], row['Categoria'], row['Descricao'], row['Metodo_Pagamento'], row['Bandeira_cartão'],row['Frequencia'], row['Banco_Corretora'], row['Status']))
             conn.commit()
             st.success("Despesas importadas com sucesso!")
     except Exception as e:
@@ -179,13 +177,15 @@ def app():
                 else:
                     banco_corretora = banco_opcao
 
+                status = st.selectbox("Status", ['Realizado', 'Previsão'])
+
                 if st.button("Adicionar Despesa"):
                     # Aqui você adicionaria a lógica para salvar a nova fonte no banco de dados, se necessário
-                    insert_despesa(id_user, valor, data, fornecedor_despesas, categoria, descricao, metodo_pagamento, bandeira_cartao,frequencia, banco_corretora)
+                    insert_despesa(id_user, valor, data, fornecedor_despesas, categoria, descricao, metodo_pagamento, bandeira_cartao,frequencia, banco_corretora, status)
                     if frequencia == 'Recorrente' and meses_recorrentes > 0:
                         for mes in range(1, meses_recorrentes + 1):
                             data_recorrente = data + relativedelta(months=mes)
-                            insert_despesa(id_user, valor, data_recorrente, fornecedor_despesas, categoria, descricao, metodo_pagamento, bandeira_cartao,'Recorrente', banco_corretora)
+                            insert_despesa(id_user, valor, data_recorrente, fornecedor_despesas, categoria, descricao, metodo_pagamento, bandeira_cartao,'Recorrente', banco_corretora, status)
                     st.success(f"Despesas(s) adicionada(s) com sucesso!")
                 pass
             elif metodo_lancamento == "CSV":
@@ -236,9 +236,10 @@ def app():
                     banco_corretora = novo_banco_corretora if novo_banco_corretora else despesas_to_edit['Banco_Corretora']
                 else:
                     banco_corretora = banco_opcao
+                status = st.selectbox("Status", ['Realizado', 'Previsão'])
 
             if st.button("Salvar Alterações"):
-                update_despesa(despesas_id_to_edit, valor, data, fornecedor_despesas, categoria, descricao, metodo_pagamento, bandeira_cartao,frequencia, banco_corretora)
+                update_despesa(despesas_id_to_edit, valor, data, fornecedor_despesas, categoria, descricao, metodo_pagamento, bandeira_cartao,frequencia, banco_corretora, status)
                 st.success(f"Receita atualizada com sucesso!")
 
         elif selected == "Excluir":

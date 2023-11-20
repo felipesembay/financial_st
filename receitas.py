@@ -6,7 +6,7 @@ import hashlib
 from streamlit_option_menu import option_menu
 from dateutil.relativedelta import relativedelta
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", initial_sidebar_state="expanded")
 
 db_config = {
     'host': '172.17.0.2',
@@ -25,16 +25,16 @@ def create_db_connection():
         return None
 
 # Suponha que esta função conecte ao banco de dados e insira a receita
-def insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora):
+def insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status):
     conn = create_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
             query = """
-            INSERT INTO receitas (ID_Users, Valor, Data, Fonte, Categoria, Descricao, Metodo_Pagamento, Frequencia, Banco_Corretora)
+            INSERT INTO receitas (ID_Users, Valor, Data, Fonte, Categoria, Descricao, Metodo_Pagamento, Frequencia, Banco_Corretora, Status)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(query, (id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora))
+            cursor.execute(query, (id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status))
             conn.commit()
             cursor.close()
             conn.close()
@@ -42,18 +42,18 @@ def insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pag
         except Error as e:
             st.error(f"Erro ao inserir a receita: {e}")
 
-def update_receita(id_receita, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora):
+def update_receita(id_receita, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status):
     conn = create_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
             query = """
             UPDATE receitas
-            SET Valor = %s, Data = %s, Fonte = %s, Categoria = %s, Descricao = %s, Metodo_Pagamento = %s, Frequencia = %s, Banco_Corretora = %s
+            SET Valor = %s, Data = %s, Fonte = %s, Categoria = %s, Descricao = %s, Metodo_Pagamento = %s, Frequencia = %s, Banco_Corretora = %s, Status = %s
             WHERE ID_Receita = %s
             """
             # A ordem dos parâmetros deve corresponder aos campos na instrução SQL, exceto o ID_Receita no final, que é usado na cláusula WHERE.
-            cursor.execute(query, (valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, id_receita))
+            cursor.execute(query, (valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status, id_receita))
             conn.commit()
             st.success("Receita atualizada com sucesso!")
         except Error as e:
@@ -86,7 +86,7 @@ def get_receitas():
             result = cursor.fetchall()
             cursor.close()
             conn.close()
-            return pd.DataFrame(result, columns=["ID_Receita", "ID_Users", "Valor", "Data", "Fonte", "Categoria", "Descricao", "Metodo_Pagamento", "Frequencia", "Banco_Corretora"])
+            return pd.DataFrame(result, columns=["ID_Receita", "ID_Users", "Valor", "Data", "Fonte", "Categoria", "Descricao", "Metodo_Pagamento", "Frequencia", "Banco_Corretora", "Status"])
         except Error as e:
             st.error(f"Erro ao obter receitas: {e}")
             return pd.DataFrame()
@@ -100,9 +100,9 @@ def importar_csv(id_user, file):
             cursor = conn.cursor()
             for _, row in data.iterrows():
                 cursor.execute("""
-                    INSERT INTO receitas (ID_Users, Valor, Data, Fonte, Categoria, Descricao, Metodo_Pagamento, Frequencia, Banco_Corretora)
+                    INSERT INTO receitas (ID_Users, Valor, Data, Fonte, Categoria, Descricao, Metodo_Pagamento, Frequencia, Banco_Corretora, Status)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (id_user, row['Valor'], row['Data'], row['Fonte'], row['Categoria'], row['Descricao'], row['Metodo_Pagamento'], row['Frequencia'], row['Banco_Corretora']))
+                """, (id_user, row['Valor'], row['Data'], row['Fonte'], row['Categoria'], row['Descricao'], row['Metodo_Pagamento'], row['Frequencia'], row['Banco_Corretora'], row['Status']))
             conn.commit()
             st.success("Receitas importadas com sucesso!")
     except Exception as e:
@@ -170,21 +170,22 @@ def app():
                     meses_recorrentes = st.number_input("Por quantos meses deseja lançar essa receita recorrente?", min_value=1, max_value=12, step=1)
                 
                 banco_corretoras_lancamento = get_bancos()
-                banco_opcao = st.selectbox("Categoria da Receita", banco_corretoras_lancamento + ['Adicionar novo banco ou corretora'])
+                banco_opcao = st.selectbox("Qual seu banco", banco_corretoras_lancamento + ['Adicionar novo banco ou corretora'])
                 if banco_opcao == 'Adicionar novo banco ou corretora':
                     novo_banco_corretora = st.text_input("Digite o Banco ou Corretora")
                     if novo_banco_corretora:
                         banco_corretora = novo_banco_corretora
                 else:
                     banco_corretora = banco_opcao
+                status = st.selectbox("Status", ['Realizado', 'Previsão'])
 
                 if st.button("Adicionar Receita"):
                     # Aqui você adicionaria a lógica para salvar a nova fonte no banco de dados, se necessário
-                    insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
+                    insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status)
                     if frequencia == 'Recorrente' and meses_recorrentes > 0:
                         for mes in range(1, meses_recorrentes + 1):
                             data_recorrente = data + relativedelta(months=mes)
-                            insert_receita(id_user, valor, data_recorrente, fonte, categoria, descricao, metodo_pagamento, 'Recorrente', banco_corretora)
+                            insert_receita(id_user, valor, data_recorrente, fonte, categoria, descricao, metodo_pagamento, 'Recorrente', banco_corretora, status)
                     st.success(f"Receita(s) adicionada(s) com sucesso!")
                 pass
             elif metodo_lancamento == "CSV":
@@ -231,9 +232,10 @@ def app():
                     banco_corretora = novo_banco_corretora if novo_banco_corretora else receita_to_edit['Banco_Corretora']
                 else:
                     banco_corretora = banco_opcao
+                status = st.selectbox("Status", ['Realizado', 'Previsão'])
 
             if st.button("Salvar Alterações"):
-                update_receita(receita_id_to_edit, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora)
+                update_receita(receita_id_to_edit, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status)
                 st.success(f"Receita atualizada com sucesso!")
 
         elif selected == "Excluir":

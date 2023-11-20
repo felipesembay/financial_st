@@ -3,6 +3,7 @@ from receitas import app as app_receitas
 from despesas import app as app_despesas
 from investimentos import app as app_investimentos
 
+
 PAGES = {
     "Receitas": app_receitas,
     "Despesas": app_despesas,
