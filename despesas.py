@@ -30,13 +30,12 @@ def insert_despesa(id_user, valor, data, fornecedor, categoria, descricao, metod
             cursor = conn.cursor()
             query = """
             INSERT INTO despesas (ID_Users, Valor, Data, Fornecedor, Categoria, Descricao, Metodo_Pagamento, Bandeira_cartao, Frequencia, Banco_Corretora, Status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(query, (id_user, valor, data, fornecedor, categoria, descricao, metodo_pagamento, bandeira_cartao, frequencia, banco_corretora, status))
             conn.commit()
             cursor.close()
             conn.close()
-            st.success("Despesa adicionada com sucesso!")
         except Error as e:
             st.error(f"Erro ao inserir a despesa: {e}")
 

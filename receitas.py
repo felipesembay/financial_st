@@ -32,7 +32,7 @@ def insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pag
             cursor = conn.cursor()
             query = """
             INSERT INTO receitas (ID_Users, Valor, Data, Fonte, Categoria, Descricao, Metodo_Pagamento, Frequencia, Banco_Corretora, Status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             cursor.execute(query, (id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status))
             conn.commit()
