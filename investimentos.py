@@ -4,6 +4,7 @@ from mysql.connector import Error
 import yfinance as yf
 from streamlit_option_menu import option_menu
 import pandas as pd
+import consultar as Consulta
 
 # Configuração do banco de dados
 db_config = {
@@ -140,6 +141,10 @@ def app():
             investimento_id_to_delete = st.selectbox("Selecione a ID da receita para excluir:", investimentos_df['ID'].tolist())
             if st.button("Excluir Lançamento"):
                 delete_investimentos(investimento_id_to_delete)
+
+    if selected == "Consultar título":
+        Consulta.consultar_titulos()
+
 
 
 if __name__ == "__main__":
