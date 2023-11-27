@@ -23,16 +23,16 @@ def create_db_connection():
         st.error(f"Erro ao conectar ao banco de dados MySQL: {e}")
         return None
 
-def insert_investment(id_user, symbol, purchase_date, quantity, purchase_price, acquisition_cost, broker, portfolio, objective):
+def insert_investment(id_user, symbol, purchase_date, quantity, purchase_price, acquisition_cost, broker, portfolio, objective, status):
     conn = create_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
             query = """
-            INSERT INTO investimentos (ID_Users, Simbolo_Acao, Data_Compra, Quantidade, Preco_Compra, Custo_Aquisicao, Corretora, Carteira, Objetivo)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO investimentos (ID_Users, Simbolo_Acao, Data_Compra, Quantidade, Preco_Compra, Custo_Aquisicao, Corretora, Carteira, Objetivo, Status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(query, (id_user, symbol, purchase_date, quantity, purchase_price, acquisition_cost, broker, portfolio, objective))
+            cursor.execute(query, (id_user, symbol, purchase_date, quantity, purchase_price, acquisition_cost, broker, portfolio, objective, status))
             conn.commit()
             cursor.close()
             conn.close()
@@ -49,7 +49,7 @@ def get_investments():
             result = cursor.fetchall()
             cursor.close()
             conn.close()
-            return pd.DataFrame(result, columns=["ID", "ID_Users", "simbolo_acao", "data_compra", "quantidade", "preco_compra", "custo_aquisicao", "corretora", "carteira", "objetivo", "data_criacao", "data_atualizacao"])
+            return pd.DataFrame(result, columns=["ID", "ID_Users", "simbolo_acao", "data_compra", "quantidade", "preco_compra", "custo_aquisicao", "corretora", "carteira", "objetivo", "data_criacao", "data_atualizacao", "status"])
         except Error as e:
             st.error(f"Erro ao obter os investimentos: {e}")
             return pd.DataFrame()  # Retornar um DataFrame vazio em caso de erro
@@ -94,7 +94,7 @@ def app():
 
                 # Divide a tela em 4 colunas e 2 linhas
                 col1, col2, col3, col4 = st.columns(4)
-                col5, col6, col7 = st.columns(3)
+                col5, col6, col7, col8 = st.columns(4)
 
                 # Coluna 1
                 with col1:
@@ -112,9 +112,12 @@ def app():
                 with col6:
                     portfolio = st.text_input("Carteira:")
                 with col7:
+                    status = st.selectbox("Status", options=["Compra", "Venda"])
+                with col8:
                     acquisition_cost = quantity * purchase_price
 
                 objective = st.text_area("Objetivo do Investimento:")
+
 
                 # Verifique se os dados da ação estão disponíveis
                 try:
@@ -126,7 +129,7 @@ def app():
                         if min_price <= purchase_price <= max_price:
                             st.success(f"O preço de compra de {purchase_price} está dentro do intervalo entre {min_price} e {max_price}.")
                             if st.button("Adicionar Investimento"):
-                                insert_investment(id_user, symbol, purchase_date, quantity, purchase_price, acquisition_cost, broker, portfolio, objective)
+                                insert_investment(id_user, symbol, purchase_date, quantity, purchase_price, acquisition_cost, broker, portfolio, objective, status)
                         else:
                             st.error(f"O preço de compra de {purchase_price} está fora do intervalo entre {min_price} e {max_price}.")
                     else:
