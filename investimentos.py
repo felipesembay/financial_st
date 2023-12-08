@@ -149,6 +149,5 @@ def app():
         Consulta.consultar_titulos()
 
 
-
 if __name__ == "__main__":
     app()
