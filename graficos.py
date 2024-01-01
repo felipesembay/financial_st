@@ -44,7 +44,7 @@ if not receitas.empty and not despesas.empty and not investimentos.empty:
     with col3:
         st.metric(label="Total Investimentos", value=f"R$ {total_investimentos:.2f}")
     with col4:
-        saldo = total_receitas - total_despesas
-        st.metric(label="Saldo", value=f"R$ {saldo:.2f}")
+        saldo = total_receitas - total_despesas - total_investimentos
+        st.metric(label="Caixa", value=f"R$ {saldo:.2f}")
 else:
     st.error("Não foi possível recuperar os dados.")

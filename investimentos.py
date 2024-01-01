@@ -40,12 +40,13 @@ def insert_investment(id_user, symbol, purchase_date, quantity, purchase_price, 
         except Error as e:
             st.error(f"Erro ao inserir o investimento: {e}")
 
-def get_investments():
+def get_investments(id_user):
     conn = create_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM investimentos")
+            query = "SELECT * FROM investimentos WHERE ID_Users = %s"
+            cursor.execute(query, (id_user,))
             result = cursor.fetchall()
             cursor.close()
             conn.close()
@@ -81,12 +82,16 @@ def app():
         selected_option = st.radio("Selecione uma opção:", ["Exibir Lançamentos", "Adicionar Lançamentos", "Excluir Lançamentos"], key='radio_option', horizontal=True)
 
         if selected_option == "Exibir Lançamentos":
-            investments = get_investments()
-            if investments.empty:
-                st.warning("Nenhum investimento encontrado na carteira.")
+            if 'user_id' in st.session_state:
+                id_user = st.session_state['user_id']
+                investments = get_investments(id_user)
+                if investments.empty:
+                    st.warning("Nenhum investimento encontrado na carteira.")
+                else:
+                    st.subheader("Carteira de Ações:")
+                    st.dataframe(investments)
             else:
-                st.subheader("Carteira de Ações:")
-                st.dataframe(investments)
+                st.warning("Usuário não identificado. Faça login para ver os investimentos.")
 
         elif selected_option == "Adicionar Lançamentos":
             if 'user_id' in st.session_state:
@@ -138,12 +143,19 @@ def app():
                     st.error(f"Erro ao obter dados da ação: {e}")
         
         elif selected_option == "Excluir Lançamentos":
-            # Certifique-se de que receitas_df está disponível
-            investimentos_df = get_investments()
-            st.dataframe(investimentos_df)
-            investimento_id_to_delete = st.selectbox("Selecione a ID da receita para excluir:", investimentos_df['ID'].tolist())
-            if st.button("Excluir Lançamento"):
-                delete_investimentos(investimento_id_to_delete)
+            if 'user_id' in st.session_state:
+                id_user = st.session_state['user_id']
+                investimentos_df = get_investments(id_user)
+                if investimentos_df.empty:
+                    st.warning("Nenhum investimento encontrado para exclusão.")
+                else:
+                    st.dataframe(investimentos_df)
+                    investimento_id_to_delete = st.selectbox("Selecione a ID do investimento para excluir:", investimentos_df['ID'].tolist())
+                    if st.button("Excluir Lançamento"):
+                        delete_investimentos(investimento_id_to_delete)
+            else:
+                st.warning("Usuário não identificado. Faça login para gerenciar investimentos.")
+
 
     if selected == "Consultar título":
         Consulta.consultar_titulos()
