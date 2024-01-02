@@ -123,7 +123,6 @@ def app():
 
                 objective = st.text_area("Objetivo do Investimento:")
 
-
                 # Verifique se os dados da ação estão disponíveis
                 try:
                     stock_data = yf.download(symbol, start=purchase_date)

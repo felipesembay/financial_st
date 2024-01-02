@@ -75,12 +75,12 @@ def delete_despesa(id_despesa):
             conn.close()
 
 # Função para buscar despesas do banco de dados
-def get_despesas():
+def get_despesas(user_id):
     conn = create_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM despesas")
+            cursor.execute("SELECT * FROM despesas WHERE ID_Users = %s", (user_id,))
             result = cursor.fetchall()
             cursor.close()
             conn.close()
@@ -131,6 +131,7 @@ def app():
     )
 
     if 'user_id' in st.session_state:
+        user_id = st.session_state['user_id']
         if selected == "Adicionar":
             metodo_lancamento = st.radio("Prefere lançar manualmente ou utilizar CSV?", ["Manual", "CSV"], horizontal=True)
             if metodo_lancamento == "Manual":
@@ -194,7 +195,7 @@ def app():
                     importar_csv(id_user, uploaded_file)
 
         elif selected == "Editar":
-            despesas_df = get_despesas()
+            despesas_df = get_despesas(user_id)
             st.dataframe(despesas_df)
             st.subheader("Editar Receita")
             despesas_id_to_edit = st.selectbox("Selecione a despesa para editar", despesas_df['ID_Despesa'].tolist())
@@ -244,7 +245,7 @@ def app():
         elif selected == "Excluir":
             st.subheader("Excluir Lançamento")
             # Certifique-se de que receitas_df está disponível
-            despesas_df = get_despesas()
+            despesas_df = get_despesas(user_id)
             st.dataframe(despesas_df)
             despesa_id_to_delete = st.selectbox("Selecione a ID da despesa para excluir:", despesas_df['ID_Despesa'].tolist())
             if st.button("Excluir Lançamento"):

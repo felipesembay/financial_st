@@ -25,16 +25,16 @@ def create_db_connection():
         return None
 
 # Suponha que esta função conecte ao banco de dados e insira a receita
-def insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status):
+def insert_receita(id_user, valor, data, cliente, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status):
     conn = create_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
             query = """
-            INSERT INTO receitas (ID_Users, Valor, Data, Fonte, Categoria, Descricao, Metodo_Pagamento, Frequencia, Banco_Corretora, Status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO receitas (ID_Users, Valor, Data, Cliente, Fonte, Categoria, Descricao, Metodo_Pagamento, Frequencia, Banco_Corretora, Status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(query, (id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status))
+            cursor.execute(query, (id_user, valor, data, cliente, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status))
             conn.commit()
             cursor.close()
             conn.close()
@@ -42,20 +42,19 @@ def insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pag
         except Error as e:
             st.error(f"Erro ao inserir a receita: {e}")
 
-def update_receita(id_receita, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status):
+def update_receita(id_receita, valor, data, cliente, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status):
     conn = create_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
             query = """
             UPDATE receitas
-            SET Valor = %s, Data = %s, Fonte = %s, Categoria = %s, Descricao = %s, Metodo_Pagamento = %s, Frequencia = %s, Banco_Corretora = %s, Status = %s
+            SET Valor = %s, Data = %s, Cliente = %s, Fonte = %s, Categoria = %s, Descricao = %s, Metodo_Pagamento = %s, Frequencia = %s, Banco_Corretora = %s, Status = %s
             WHERE ID_Receita = %s
             """
             # A ordem dos parâmetros deve corresponder aos campos na instrução SQL, exceto o ID_Receita no final, que é usado na cláusula WHERE.
-            cursor.execute(query, (valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status, id_receita))
+            cursor.execute(query, (valor, data, cliente, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status, id_receita))
             conn.commit()
-            st.success("Receita atualizada com sucesso!")
         except Error as e:
             st.error(f"Erro ao atualizar a receita: {e}")
         finally:
@@ -77,16 +76,17 @@ def delete_receita(id_receita):
             conn.close()
 
 # Suponha que esta função busque as receitas do banco de dados
-def get_receitas():
+def get_receitas(user_id):
     conn = create_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM receitas")
+            # Adicionando filtragem pelo user_id
+            cursor.execute("SELECT * FROM receitas WHERE ID_Users = %s", (user_id,))
             result = cursor.fetchall()
             cursor.close()
             conn.close()
-            return pd.DataFrame(result, columns=["ID_Receita", "ID_Users", "Valor", "Data", "Fonte", "Categoria", "Descricao", "Metodo_Pagamento", "Frequencia", "Banco_Corretora", "Status"])
+            return pd.DataFrame(result, columns=["ID_Receita", "ID_Users", "Valor", "Data", "Cliente" ,"Fonte", "Categoria", "Descricao", "Metodo_Pagamento", "Frequencia", "Banco_Corretora", "Status"])
         except Error as e:
             st.error(f"Erro ao obter receitas: {e}")
             return pd.DataFrame()
@@ -100,8 +100,8 @@ def importar_csv(id_user, file):
             cursor = conn.cursor()
             for _, row in data.iterrows():
                 cursor.execute("""
-                    INSERT INTO receitas (ID_Users, Valor, Data, Fonte, Categoria, Descricao, Metodo_Pagamento, Frequencia, Banco_Corretora, Status)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO receitas (ID_Users, Valor, Data, Cliente, Fonte, Categoria, Descricao, Metodo_Pagamento, Frequencia, Banco_Corretora, Status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (id_user, row['Valor'], row['Data'], row['Fonte'], row['Categoria'], row['Descricao'], row['Metodo_Pagamento'], row['Frequencia'], row['Banco_Corretora'], row['Status']))
             conn.commit()
             st.success("Receitas importadas com sucesso!")
@@ -136,13 +136,14 @@ def app():
     )
 
     if 'user_id' in st.session_state:
+        user_id = st.session_state['user_id']
         if selected == "Adicionar":
             metodo_lancamento = st.radio("Prefere lançar manualmente ou utilizar CSV?", ["Manual", "CSV"], horizontal=True)
             if metodo_lancamento == "Manual":
                 id_user = st.session_state['user_id']
                 valor = st.number_input("Valor da Receita", min_value=0.0, format="%.2f")
                 data = st.date_input("Data da Receita")
-                
+                cliente = st.text_input("De quem você está recebendo?")
                 # Obter fontes de receitas e adicionar a opção para nova fonte
                 fontes_receitas = get_fontes_receitas()
                 fonte_opcao = st.selectbox("Fonte da Receita", fontes_receitas + ['Adicionar nova...'])
@@ -181,11 +182,11 @@ def app():
 
                 if st.button("Adicionar Receita"):
                     # Aqui você adicionaria a lógica para salvar a nova fonte no banco de dados, se necessário
-                    insert_receita(id_user, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status)
+                    insert_receita(id_user, valor, data, cliente, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status)
                     if frequencia == 'Recorrente' and meses_recorrentes > 0:
                         for mes in range(1, meses_recorrentes + 1):
                             data_recorrente = data + relativedelta(months=mes)
-                            insert_receita(id_user, valor, data_recorrente, fonte, categoria, descricao, metodo_pagamento, 'Recorrente', banco_corretora, status)
+                            insert_receita(id_user, valor, data_recorrente, cliente ,fonte, categoria, descricao, metodo_pagamento, 'Recorrente', banco_corretora, status)
                     st.success(f"Receita(s) adicionada(s) com sucesso!")
                 pass
             elif metodo_lancamento == "CSV":
@@ -195,7 +196,7 @@ def app():
                     importar_csv(id_user, uploaded_file)
 
         elif selected == "Editar":
-            receitas_df = get_receitas()
+            receitas_df = get_receitas(user_id)
             st.dataframe(receitas_df)
             st.subheader("Editar Receita")
             receita_id_to_edit = st.selectbox("Selecione a receita para editar", receitas_df['ID_Receita'].tolist())
@@ -204,7 +205,7 @@ def app():
             if receita_to_edit is not None:
                 valor = st.number_input("Valor da Receita", value=float(receita_to_edit['Valor']))
                 data = st.date_input("Data da Receita", value=receita_to_edit['Data'])
-
+                cliente = st.text_input("De quem você recebeu?", value=receita_to_edit['Cliente'])
                 fontes_receitas = get_fontes_receitas()
                 fonte_opcao = st.selectbox("Fonte da Receita", fontes_receitas + ['Adicionar nova...'], index=fontes_receitas.index(receita_to_edit['Fonte']) if receita_to_edit['Fonte'] in fontes_receitas else len(fontes_receitas))
                 if fonte_opcao == 'Adicionar nova...':
@@ -233,21 +234,22 @@ def app():
                 else:
                     banco_corretora = banco_opcao
                 status = st.selectbox("Status", ['Realizado', 'Previsão'])
-
             if st.button("Salvar Alterações"):
-                update_receita(receita_id_to_edit, valor, data, fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status)
+                update_receita(receita_id_to_edit, valor, data, cliente,fonte, categoria, descricao, metodo_pagamento, frequencia, banco_corretora, status)
                 st.success(f"Receita atualizada com sucesso!")
+            pass
 
         elif selected == "Excluir":
+            receitas_df = get_receitas(user_id)
             st.subheader("Excluir Receita")
             # Certifique-se de que receitas_df está disponível
-            receitas_df = get_receitas()
+            receitas_df = get_receitas(user_id)
             st.dataframe(receitas_df)
             receita_id_to_delete = st.selectbox("Selecione a ID da receita para excluir:", receitas_df['ID_Receita'].tolist())
             if st.button("Excluir Receita"):
                 delete_receita(receita_id_to_delete)
                 st.rerun()  # Atualiza a lista de receitas após a exclusão
-
+            pass
     else:
         st.error("Usuário não está logado. Por favor, faça o login para acessar esta página.")
 
