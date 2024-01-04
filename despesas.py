@@ -159,7 +159,7 @@ def app():
                     categoria = categoria_opcao
 
                 descricao = st.text_area("Descrição da Despesa")
-                metodo_pagamento = st.selectbox("Método de Recebimento", ['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online', 'Pix', 'Criptomoeda', 'Cartão de Crédito', 'Cartão de Débito'])
+                metodo_pagamento = st.selectbox("Método de Pagamento", ['Transferência Bancária', 'Cheque', 'Dinheiro', 'Online', 'Pix', 'Criptomoeda', 'Cartão de Crédito', 'Cartão de Débito'])
                 bandeira_cartao = None
                 if metodo_pagamento in ['Cartão de Crédito', 'Cartão de Débito']:
                     bandeira_cartao = st.selectbox('Bandeira do Cartão', ['Visa', 'MasterCard'])

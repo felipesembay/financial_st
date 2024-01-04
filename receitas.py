@@ -38,7 +38,6 @@ def insert_receita(id_user, valor, data, cliente, fonte, categoria, descricao, m
             conn.commit()
             cursor.close()
             conn.close()
-            st.success("Receita adicionada com sucesso!")
         except Error as e:
             st.error(f"Erro ao inserir a receita: {e}")
 

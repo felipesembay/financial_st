@@ -145,3 +145,111 @@ fig.update_layout(
 # Mostrar a figura na coluna
 col1.plotly_chart(fig)
 
+#############################################################################################
+# Criar duas colunas
+col1, col2 = st.columns(2)
+
+# Filtrar receitas por centro de receitas
+query = """SELECT Cliente, SUM(Valor) as Total FROM receitas GROUP BY Cliente"""
+cursor.execute(query)
+receitas_data = cursor.fetchall()
+
+# Filtrar despesas por centro de custo
+query = """SELECT Fornecedor, SUM(Valor) as Total FROM despesas GROUP BY Fornecedor"""
+cursor.execute(query)
+despesas_data = cursor.fetchall()
+
+# Filtrar valores nulos das receitas
+receitas_data_filtered = [(d[0], float(d[1])) for d in receitas_data if d[0] is not None and d[1] is not None]
+
+# Filtrar valores nulos das despesas
+despesas_data_filtered = [(d[0], float(d[1])) for d in despesas_data if d[0] is not None and d[1] is not None]
+
+# Definir lista de cores para as receitas
+cores_receitas = ['green', 'limegreen', 'darkgreen', 'forestgreen']
+
+# Criar gráfico de pizza para as receitas
+fig_receitas = px.pie(values=[d[1] for d in receitas_data_filtered], names=[d[0] for d in receitas_data_filtered], 
+                      color_discrete_sequence=cores_receitas,
+                      width=350, height=350, hole=0.5)
+
+# Definir lista de cores para as despesas
+cores_despesas = ['red', 'orangered', 'darkred', 'indianred']
+
+# Criar gráfico de pizza para as despesas
+fig_despesas = px.pie(values=[d[1] for d in despesas_data_filtered], names=[d[0] for d in despesas_data_filtered], 
+                      color_discrete_sequence=cores_despesas, 
+                      width=370, height=370, hole=0.5)
+
+# Criar uma figura contendo os dois gráficos
+specs = [[{'type': 'pie'}, {'type': 'pie'}]]
+fig = make_subplots(rows=1, cols=2, specs=specs)
+fig.add_trace(fig_receitas.data[0], row=1, col=1)
+fig.add_trace(fig_despesas.data[0], row=1, col=2)
+
+# Adicionar um título à figura
+fig.update_layout(
+    title={
+        'text': "Cliente e Fornecedores",
+        'y':0.95,
+        'x':0.5,
+        'xanchor': 'center',
+        'yanchor': 'top'}
+)
+# Mostrar a figura na coluna
+col1.plotly_chart(fig)
+
+####################################################################################
+# Criar duas colunas
+col1, col2 = st.columns(2)
+
+# Filtrar receitas por centro de receitas
+query = """SELECT Categoria, SUM(Valor) as Total FROM receitas GROUP BY Categoria"""
+cursor.execute(query)
+receitas_data = cursor.fetchall()
+
+# Filtrar despesas por centro de custo
+query = """SELECT Categoria, SUM(Valor) as Total FROM despesas GROUP BY Categoria"""
+cursor.execute(query)
+despesas_data = cursor.fetchall()
+
+# Filtrar valores nulos das receitas
+receitas_data_filtered = [(d[0], float(d[1])) for d in receitas_data if d[0] is not None and d[1] is not None]
+
+# Filtrar valores nulos das despesas
+despesas_data_filtered = [(d[0], float(d[1])) for d in despesas_data if d[0] is not None and d[1] is not None]
+
+# Definir lista de cores para as receitas
+cores_receitas = ['green', 'limegreen', 'darkgreen', 'forestgreen']
+
+# Criar gráfico de pizza para as receitas
+fig_receitas = px.pie(values=[d[1] for d in receitas_data_filtered], names=[d[0] for d in receitas_data_filtered], 
+                      color_discrete_sequence=cores_receitas,
+                      width=350, height=350, hole=0.5)
+
+# Definir lista de cores para as despesas
+cores_despesas = ['red', 'orangered', 'darkred', 'indianred']
+
+# Criar gráfico de pizza para as despesas
+fig_despesas = px.pie(values=[d[1] for d in despesas_data_filtered], names=[d[0] for d in despesas_data_filtered], 
+                      color_discrete_sequence=cores_despesas, 
+                      width=370, height=370, hole=0.5)
+
+# Criar uma figura contendo os dois gráficos
+specs = [[{'type': 'pie'}, {'type': 'pie'}]]
+fig = make_subplots(rows=1, cols=2, specs=specs)
+fig.add_trace(fig_receitas.data[0], row=1, col=1)
+fig.add_trace(fig_despesas.data[0], row=1, col=2)
+
+# Adicionar um título à figura
+fig.update_layout(
+    title={
+        'text': "Tipo de Receita/ Despesa",
+        'y':0.95,
+        'x':0.5,
+        'xanchor': 'center',
+        'yanchor': 'top'}
+)
+# Mostrar a figura na coluna
+col1.plotly_chart(fig)
+

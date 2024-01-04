@@ -72,7 +72,6 @@ def delete_investimentos(id):
 
 def app():
     st.title('Gestão de Investimentos')
-
     selected = option_menu(
         menu_title=None,
         options=["Carteira de Ações", "Consultar título", "Simulador e BackTesting"],
@@ -109,7 +108,7 @@ def app():
                 with col3:
                     quantity = st.number_input("Quantidade de Ações:", min_value=1)
                 with col4:
-                    purchase_price = st.number_input("Preço da Compra por Ação:", min_value=0.0, format="%.2f")
+                    purchase_price = st.number_input("Preço da Compra por Ação:", min_value=0.00, format="%.2f")
 
                 # Coluna 2
                 with col5:
@@ -119,7 +118,7 @@ def app():
                 with col7:
                     status = st.selectbox("Status", options=["Compra", "Venda"])
                 with col8:
-                    acquisition_cost = quantity * purchase_price
+                    acquisition_cost = round(quantity * purchase_price, 2)
 
                 objective = st.text_area("Objetivo do Investimento:")
 
@@ -127,8 +126,8 @@ def app():
                 try:
                     stock_data = yf.download(symbol, start=purchase_date)
                     if not stock_data.empty and len(stock_data) > 0:
-                        min_price = stock_data['Low'][0]
-                        max_price = stock_data['High'][0]
+                        min_price = round(stock_data['Low'][0], 2)
+                        max_price = round(stock_data['High'][0], 2)
 
                         if min_price <= purchase_price <= max_price:
                             st.success(f"O preço de compra de {purchase_price} está dentro do intervalo entre {min_price} e {max_price}.")
@@ -158,7 +157,6 @@ def app():
 
     if selected == "Consultar título":
         Consulta.consultar_titulos()
-
 
 if __name__ == "__main__":
     app()
