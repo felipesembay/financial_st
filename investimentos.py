@@ -156,7 +156,10 @@ def app():
 
 
     if selected == "Consultar título":
-        Consulta.consultar_titulos()
+        choice = st.radio("Consultar cotação ou informações fundamentalistas?", ["Ação", "Informações Fundamentalistas"], horizontal=True)
+        if choice == "Ação":
+            Consulta.consultar_titulos()
+
 
 if __name__ == "__main__":
     app()
